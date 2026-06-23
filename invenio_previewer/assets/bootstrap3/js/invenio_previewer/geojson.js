@@ -15,11 +15,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const fileUrl = new URL(fileUri, window.location.href);
 
   const map = L.map('map').setView([0, 0], 13);
+  let initialView = null;
 
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
+
+  const homeControl = L.control({ position: 'topleft' });
+  homeControl.onAdd = function () {
+    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    const button = L.DomUtil.create('a', '', container);
+    button.href = '#';
+    button.title = 'Reset view';
+    button.innerHTML = '&#8962;';
+    L.DomEvent.disableClickPropagation(button);
+    L.DomEvent.on(button, 'click', function (e) {
+      L.DomEvent.stop(e);
+      if (initialView) {
+        map.setView(initialView.center, initialView.zoom);
+      }
+    });
+    return container;
+  };
+  homeControl.addTo(map);
 
   fetch(fileUrl.href).then(res => res.json()).then(data => {
     const geoJsonLayer = L.geoJson(data, {
@@ -38,6 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     })
     geoJsonLayer.addTo(map);
-    map.fitBounds(geoJsonLayer.getBounds());
+    const bounds = geoJsonLayer.getBounds();
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { animate: false });
+      initialView = { center: map.getCenter(), zoom: map.getZoom() };
+    }
   });
 });
