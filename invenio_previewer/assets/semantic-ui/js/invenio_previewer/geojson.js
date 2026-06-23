@@ -62,5 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
       map.fitBounds(bounds, { animate: false });
       initialView = { center: map.getCenter(), zoom: map.getZoom() };
     }
+    map.invalidateSize();
   });
 });
